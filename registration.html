@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Enter your data</title>
+        <style>
+            form {
+                width: 420px;
+                }
+                div {
+                margin-bottom: 20px;
+                }
+            label {
+                display: inline-block;
+                width: 240px;
+                text-align: right;
+                padding-right: 10px;
+            }
+            button, input {
+                float: right;
+            }
+        </style>
+    </head>
+    <body>
+        <form action="http://127.0.0.1:8080" method="post">
+            <div>
+                <label for="login">Login </label>
+                <input name="login" id="login" value="user">
+            </div>
+            <div>
+                <label for="pwd">Password </label>
+                <input name="pwd" id="pwd" value="pwrt">
+            </div>
+            <div>
+                <label for="fname">First name </label>
+                <input name="fname" id="fname" value="Steve">
+            </div>
+            <div>
+                <label for="sname">Second name </label>
+                <input name="sname" id="sname" value="Jobs">
+            </div>
+            <div>
+                <label for="gender">Gender </label>
+                <input name="gender" id="gender" value="male">
+            </div>
+            <div>
+                <label for="age">Age </label>
+                <input name="age" id="age" value="28">
+            </div>
+            <div>
+                <label for="hobbies">Hobbies </label>
+                <input name="hobbies" id="hobbies" value="guitar">
+            </div>
+            <div>
+                <label for="city">City </label>
+                <input name="city" id="city" value="sransk">
+            </div>
+            <div>
+                <button>Register</button>
+            </div>
+        </form>
+    </body>
+</html>
