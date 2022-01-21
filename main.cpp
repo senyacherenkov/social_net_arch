@@ -264,6 +264,22 @@ class WebServerApp: public ServerApplication
         dbInit();
     }
 
+    void handlePort(const std::string& name, const std::string& value)
+    {
+        port_ = std::stoi(value);
+    }
+
+    void defineOptions(OptionSet& options)
+    {
+         Application::defineOptions(options);
+
+         options.addOption(
+         Option("port", "p", "port of server")
+         .required(true)
+         .repeatable(true)
+         .argument("port")
+         .callback(OptionCallback<WebServerApp>(this, &WebServerApp::handlePort)));
+    }
     void dbInit() {
         Poco::Data::MySQL::Connector::registerConnector();
 
@@ -297,9 +313,9 @@ class WebServerApp: public ServerApplication
                      "frid            INT unsigned NOT NULL,"
                      "PRIMARY KEY     (id));", now;
     }
-    int main(const std::vector<std::string>&)
+    int main(const std::vector<std::string>& args)
     {
-        UInt16 port = static_cast<UInt16>(config().getUInt("port", 8080));
+        UInt16 port = static_cast<UInt16>(config().getUInt("port", port_));
 
         HTTPServer srv(new HelloRequestHandlerFactory, port);
         srv.start();
@@ -310,6 +326,9 @@ class WebServerApp: public ServerApplication
 
         return Application::EXIT_OK;
     }
+
+private:
+    int port_{05};
 };
 
 POCO_SERVER_MAIN(WebServerApp)
