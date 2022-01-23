@@ -261,7 +261,7 @@ class WebServerApp: public ServerApplication
     {
         loadConfiguration();
         ServerApplication::initialize(self);
-        dbInit();
+        //dbInit();
     }
 
     void handlePort(const std::string& name, const std::string& value)
@@ -286,7 +286,7 @@ class WebServerApp: public ServerApplication
         Session session_{kSql, kDbCreds};
 
         //session << "CREATE DATABASE social_net", now;
-        session_ << "DROP TABLE IF EXISTS creds", now;
+        session_ << "DROP TABLE IF EXISTS creds;", now;
         session_ << "DROP TABLE IF EXISTS profile", now;
         session_ << "DROP TABLE IF EXISTS friends", now;
 
