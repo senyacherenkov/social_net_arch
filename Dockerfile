@@ -1,6 +1,6 @@
 # get and configure an image
 # FROM debian:stretch-slim
-FROM ubuntu:trusty as builder
+FROM ubuntu:trusty
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
     software-properties-common \
@@ -39,8 +39,8 @@ RUN ldconfig
 # build our app
 WORKDIR /root/socialnetotus
 ADD . /root/socialnetotus
-# create db user and tables via mysql file
 
+# create db user and tables via mysql file
 #solution for Can't connect to local MySQL server through socket '/var/run/mysqld/mysqld.sock'
 ENV MYSQL_ROOT_PASSWORD=1
 RUN touch /var/run/mysqld/mysqld.sock && \
@@ -58,11 +58,11 @@ RUN touch /var/run/mysqld/mysqld.sock && \
 WORKDIR /root/socialnetotus/build-dir
 RUN cmake .. && \
     cmake --build .
-RUN ls -la
+# RUN ls -la
 
 # create the final image
-FROM ubuntu:trusty
-RUN apt-get update
-WORKDIR /root
-COPY --from=builder /root/socialnetotus/build-dir/socialnetotus /root/
+# FROM ubuntu:trusty
+# RUN apt-get update
+# WORKDIR /root
+# COPY --from=builder /root/socialnetotus/build-dir/socialnetotus /root/
 CMD /root/socialnetotus/build-dir/socialnetotus --port $PORT
