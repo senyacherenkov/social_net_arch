@@ -1,6 +1,6 @@
 # get and configure an image
 # FROM debian:stretch-slim
-FROM ubuntu:trusty
+FROM ubuntu:trusty as builder
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
     software-properties-common \
@@ -11,8 +11,7 @@ RUN apt-get install -y --no-install-recommends \
     mysql-common \
     libmysqlclient-dev \
     wget
-# create db user and tables via mysql file
-RUN mysql -u root -p < poco_server.sql
+
 # g++-7 installation
 RUN add-apt-repository ppa:ubuntu-toolchain-r/test
 RUN sudo apt update
@@ -37,13 +36,33 @@ RUN cmake .. && \
     cmake --build .
 RUN cmake --build . --target install
 RUN ldconfig
-
 # build our app
-WORKDIR /root/social_net
-ADD . /root/social_net
-RUN ls -la
-WORKDIR /root/social_net/build-dir
+WORKDIR /root/socialnetotus
+ADD . /root/socialnetotus
+# create db user and tables via mysql file
+
+#solution for Can't connect to local MySQL server through socket '/var/run/mysqld/mysqld.sock'
+ENV MYSQL_ROOT_PASSWORD=1
+RUN touch /var/run/mysqld/mysqld.sock && \
+    touch /var/run/mysqld/mysqld.pid && \
+    chown -R mysql:mysql /var/run/mysqld/mysqld.sock && \
+    chown -R mysql:mysql /var/run/mysqld/mysqld.pid && \
+    chmod -R 644 /var/run/mysqld/mysqld.sock && \
+    chown -R mysql:mysql /var/lib/mysql /var/run/mysqld && \
+    service mysql restart && \
+    mysqladmin --user=root password "1" && \
+    echo ${MYSQL_ROOT_PASSWORD} && \
+    # mysqladmin -u root -h password '1' && \
+    mysql -u root --password=1 < poco_server.sql
+
+WORKDIR /root/socialnetotus/build-dir
 RUN cmake .. && \
     cmake --build .
 RUN ls -la
-CMD /root/social_net/build-dir/social_net --port $PORT
+
+# create the final image
+FROM ubuntu:trusty
+RUN apt-get update
+WORKDIR /root
+COPY --from=builder /root/socialnetotus/build-dir/socialnetotus /root/
+CMD /root/socialnetotus/build-dir/socialnetotus --port $PORT

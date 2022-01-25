@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(social_net)
+project(socialnetotus)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,8 +14,8 @@ find_package(MySQL REQUIRED)
 find_package(Poco REQUIRED DataMySQL)
 
 include_directories(${Poco_INCLUDE_DIRECTORIES})
-add_executable(social_net main.cpp)
+add_executable(socialnetotus main.cpp)
 
-target_link_libraries(social_net ${Poco_LIBRARIES})
+target_link_libraries(socialnetotus ${Poco_LIBRARIES})
 
 
