@@ -1,3 +1,0 @@
-/home/ars/repositories/social_net_arch/build/CMakeFiles/rebuild_cache.dir
-/home/ars/repositories/social_net_arch/build/CMakeFiles/edit_cache.dir
-/home/ars/repositories/social_net_arch/build/CMakeFiles/socialnetotus.dir
