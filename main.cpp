@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <regex>
 
 using namespace Poco;
 using namespace Poco::Net;
@@ -28,6 +29,9 @@ std::atomic<bool> startPage{false};
 std::atomic<bool> signUp{false};
 std::atomic<bool> signIn{false};
 std::atomic<bool> profile{false};
+
+int port{0};
+std::string address;
 
 constexpr const char* kDbCreds = "host=localhost;port=3306;db=social_net;user=poco_server;"
                                  "password=otus;compress=true;auto-reconnect=true";
@@ -70,6 +74,8 @@ class HelloRequestHandler: public HTTPRequestHandler
 
         std::string body;
         ReadFile("../greeting.html", body);
+        body = std::regex_replace(body, std::regex("127.0.0.1"), address);
+        body = std::regex_replace(body, std::regex("8080"), std::to_string(port));
         response.setContentLength(body.size());
         response.send() << body;
 
@@ -90,6 +96,8 @@ class RegistrationRequestHandler: public HTTPRequestHandler
 
         std::string body;
         ReadFile("../registration.html", body);
+        body = std::regex_replace(body, std::regex("127.0.0.1"), address);
+        body = std::regex_replace(body, std::regex("8080"), std::to_string(port));
         response.setContentLength(body.size());
         response.send() << body;
 
@@ -128,7 +136,7 @@ class DisplayFriendsRequestHandler: public HTTPRequestHandler
         auto& out = response.send();
             out << "<html>"
                     << "<body>"
-                        << "<form action=\"http://127.0.0.1:8080\" method=\"post\">"
+                        << "<form action=\"http://" << address << ":" << port << "\" method=\"post\">"
                             << "<p><b>Results:</b></p>";
         for(auto& pid: profile_ids) {
                         out << "<p>user:  " << pr.fname_ << " " << pr.sname_ <<"<Br>"
@@ -218,16 +226,16 @@ class DisplayUserRequestHandler: public HTTPRequestHandler
                         << "Age: " << pr.age_ <<"<Br>"
                         << "Hobbies: " << pr.hobbies_ <<"<Br>"
                         << "City: " << pr.city_ <<"<Br>"
-                        << "Friends: " << "<Br>";
+                        << "Friends: " << "<Br></p>";
         for(auto& mate: pr.friends_)
                         out << mate.first << " " << mate.second << "<Br>";
-                    out << "Search friends: " << "<Br>"
-                        << "<form action=\"http://127.0.0.1:8080\" method=\"post\">"
+                    out << "<p>Search friends: " << "<Br>"
+                        << "<form action=\"http://" << address << ":" << port << "\" method=\"post\">"
                             << "name "
                             << "<input name=\"fname\" id=\"fname\">"
                             << " surname "
                             << "<input name=\"sname\" id=\"sname\">"
-                            << "<input type=\"hidden\" name=\"userId\" value=" << cred_id << "\">"
+                            << "<input type=\"hidden\" name=\"userId\" value=" << cred_id << ">"
                             << "<input type=\"submit\" value=\"search\">"
                         << "</form></p>"
                     << "</body>"
@@ -261,13 +269,10 @@ class WebServerApp: public ServerApplication
     {
         loadConfiguration();
         ServerApplication::initialize(self);
-        //dbInit();
     }
 
-    void handlePort(const std::string& name, const std::string& value)
-    {
-        port_ = std::stoi(value);
-    }
+    void handlePort(const std::string& name, const std::string& value){ port = std::stoi(value); }
+    void handleAddress(const std::string& name, const std::string& value){ address = value; }
 
     void defineOptions(OptionSet& options)
     {
@@ -279,56 +284,29 @@ class WebServerApp: public ServerApplication
          .repeatable(true)
          .argument("port")
          .callback(OptionCallback<WebServerApp>(this, &WebServerApp::handlePort)));
+
+         options.addOption(
+         Option("address", "p", "address of app")
+         .required(true)
+         .repeatable(true)
+         .argument("address")
+         .callback(OptionCallback<WebServerApp>(this, &WebServerApp::handleAddress)));
     }
-    void dbInit() {
-        Poco::Data::MySQL::Connector::registerConnector();
 
-        Session session_{kSql, kDbCreds};
-
-        //session << "CREATE DATABASE social_net", now;
-        session_ << "DROP TABLE IF EXISTS creds;", now;
-        session_ << "DROP TABLE IF EXISTS profile", now;
-        session_ << "DROP TABLE IF EXISTS friends", now;
-
-        session_ << "CREATE TABLE creds "
-                     "(id             INT unsigned NOT NULL AUTO_INCREMENT,"
-                     "login           VARCHAR(150) NOT NULL,"
-                     "pwd             VARCHAR(150) NOT NULL,"
-                     "PRIMARY KEY     (id));", now;
-
-        session_ << "CREATE TABLE profile "
-                   "(id               INT unsigned NOT NULL AUTO_INCREMENT,"
-                     "crid            INT unsigned NOT NULL,"
-                     "fname           VARCHAR(150) NOT NULL,"
-                     "sname           VARCHAR(150) NOT NULL,"
-                     "age             INT unsigned NOT NULL,"
-                     "gender          VARCHAR(150) NOT NULL,"
-                     "hob             VARCHAR(150) NOT NULL,"
-                     "city            VARCHAR(150) NOT NULL,"
-                     "PRIMARY KEY     (id));", now;
-
-        session_ << "CREATE TABLE friends "
-                     "(id             INT unsigned NOT NULL AUTO_INCREMENT,"
-                     "userid          INT unsigned NOT NULL,"
-                     "frid            INT unsigned NOT NULL,"
-                     "PRIMARY KEY     (id));", now;
-    }
     int main(const std::vector<std::string>& args)
     {
-        UInt16 port = static_cast<UInt16>(config().getUInt("port", port_));
+        UInt16 port_ = static_cast<UInt16>(config().getUInt("port", port));
 
-        HTTPServer srv(new HelloRequestHandlerFactory, port);
+        Poco::Data::MySQL::Connector::registerConnector();
+        HTTPServer srv(new HelloRequestHandlerFactory, port_);
         srv.start();
-        logger().information("HTTP Server started on port %hu.", port);
+        logger().information("HTTP Server started on port %hu.", port_);
         waitForTerminationRequest();
         logger().information("Stopping HTTP Server...");
         srv.stop();
 
         return Application::EXIT_OK;
     }
-
-private:
-    int port_{05};
 };
 
 POCO_SERVER_MAIN(WebServerApp)
