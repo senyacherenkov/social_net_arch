@@ -71,4 +71,5 @@ RUN cmake .. && \
 # RUN apt-get update
 # WORKDIR /root
 # COPY --from=builder /root/socialnetotus/build-dir/socialnetotus /root/
-CMD /root/socialnetotus/build-dir/socialnetotus --port $PORT --address $ADDRESS
+COPY entrypoint.sh /
+ENTRYPOINT ["/entrypoint.sh"]
