@@ -66,6 +66,8 @@ class HelloRequestHandler: public HTTPRequestHandler
 {
     void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
     {
+        std::cerr << "HelloRequestHandler::handleRequest begin";
+
         Application& app = Application::instance();
         app.logger().information("Request from %s", request.clientAddress().toString());
 
@@ -81,6 +83,8 @@ class HelloRequestHandler: public HTTPRequestHandler
 
         startPage.store(true);
         signIn.store(true);
+        std::cerr << "HelloRequestHandler::handleRequest end";
+
     }
 };
 
@@ -88,6 +92,8 @@ class RegistrationRequestHandler: public HTTPRequestHandler
 {
     void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
     {
+        std::cerr << "RegistrationRequestHandler::handleRequest begin";
+
         Application& app = Application::instance();
         app.logger().information("Request from %s", request.clientAddress().toString());
 
@@ -104,6 +110,8 @@ class RegistrationRequestHandler: public HTTPRequestHandler
         startPage.store(false);
         signIn.store(false);
         signUp.store(true);
+        std::cerr << "RegistrationRequestHandler::handleRequest end";
+
     }
 };
 
@@ -111,6 +119,8 @@ class DisplayFriendsRequestHandler: public HTTPRequestHandler
 {
     void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
     {
+        std::cerr << "DisplayFriendsRequestHandler::handleRequest begin";
+
         Application& app = Application::instance();
         app.logger().information("Request from %s", request.clientAddress().toString());
 
@@ -154,6 +164,8 @@ class DisplayFriendsRequestHandler: public HTTPRequestHandler
                     out << "</form>"
                     << "</p></body>"
                << "</html>";
+        std::cerr << "DisplayFriendsRequestHandler::handleRequest end";
+
     }
 };
 
@@ -161,6 +173,7 @@ class DisplayUserRequestHandler: public HTTPRequestHandler
 {
     void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
     {
+        std::cerr << "DisplayUserRequestHandler::handleRequest begin";
         Application& app = Application::instance();
         app.logger().information("Request from %s", request.clientAddress().toString());
 
@@ -173,75 +186,82 @@ class DisplayUserRequestHandler: public HTTPRequestHandler
         Profile pr;
         pr.login_ = form.get("login");
         pr.pwd_ = form.get("pwd");
-        Session session_{kSql, kDbCreds};
+        try {
+            Session session_{kSql, kDbCreds};
 
-        if (signIn.load()) {
-            session_ << "SELECT id FROM creds WHERE login=(?) and pwd=(?)",
-                    into(cred_id), use(pr.login_), use(pr.pwd_), now;
-            if(cred_id) {
-                session_ << "SELECT fname, sname, age, gender, hob, city FROM profile WHERE crid=(?)",
-                                    into(pr.fname_), into(pr.sname_), into(pr.age_), into(pr.gender_),
-                                    into(pr.hobbies_), into(pr.city_), use(cred_id), now;
-                std::vector<int> frids;
-                session_ << "SELECT frid FROM friends WHERE userid=(?)", into(frids), use(cred_id), now;
-                if(!frids.empty()) {
-                    for(auto& fid: frids) {
-                        std::string f, s;
-                        session_ << "SELECT fname, sname FROM profile WHERE id=(?)", into(f), into(s), use(fid), now;
-                        pr.friends_.emplace_back(f, s);
+            if (signIn.load()) {
+                session_ << "SELECT id FROM creds WHERE login=(?) and pwd=(?)",
+                        into(cred_id), use(pr.login_), use(pr.pwd_), now;
+                if(cred_id) {
+                    session_ << "SELECT fname, sname, age, gender, hob, city FROM profile WHERE crid=(?)",
+                                        into(pr.fname_), into(pr.sname_), into(pr.age_), into(pr.gender_),
+                                        into(pr.hobbies_), into(pr.city_), use(cred_id), now;
+                    std::vector<int> frids;
+                    session_ << "SELECT frid FROM friends WHERE userid=(?)", into(frids), use(cred_id), now;
+                    if(!frids.empty()) {
+                        for(auto& fid: frids) {
+                            std::string f, s;
+                            session_ << "SELECT fname, sname FROM profile WHERE id=(?)", into(f), into(s), use(fid), now;
+                            pr.friends_.emplace_back(f, s);
+                        }
                     }
                 }
-            }
-            signIn.store(false);
-        } else if(signUp.load()) {
-            pr = Profile {form.get("login"), form.get("pwd"), form.get("fname"), form.get("sname"),
-                        std::stoi(form.get("age").data()), form.get("gender"), form.get("hobbies"), form.get("city"),};
-            std::string login;
-            session_ << "SELECT login FROM creds WHERE login=(?)", into(login), use(pr.login_), now;
-            if(!login.empty()) {
-                response.send()
-                        << "<html>"
-                            << "<body>"
-                                << "<p><b>such login already in use:</b></p>"
-                            << "</body>"
-                        << "</html>";
-                return;
-            }
-            session_ << "INSERT INTO creds (login, pwd) VALUES (?, ?)", use(pr.login_), use(pr.pwd_), now;
-            session_ << "SELECT id FROM creds WHERE login=(?) and pwd=(?)",
-                    into(cred_id), use(pr.login_), use(pr.pwd_), now;
-            session_ << "INSERT INTO profile (crid, fname, sname, age, gender, hob, city) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    use(cred_id), use(pr.fname_), use(pr.sname_), use(pr.age_), use(pr.gender_),
-                    use(pr.hobbies_), use(pr.city_),now;
+                signIn.store(false);
+            } else if(signUp.load()) {
+                pr = Profile {form.get("login"), form.get("pwd"), form.get("fname"), form.get("sname"),
+                            std::stoi(form.get("age").data()), form.get("gender"), form.get("hobbies"), form.get("city"),};
+                std::string login;
+                session_ << "SELECT login FROM creds WHERE login=(?)", into(login), use(pr.login_), now;
+                if(!login.empty()) {
+                    response.send()
+                            << "<html>"
+                                << "<body>"
+                                    << "<p><b>such login already in use:</b></p>"
+                                << "</body>"
+                            << "</html>";
+                    return;
+                }
+                session_ << "INSERT INTO creds (login, pwd) VALUES (?, ?)", use(pr.login_), use(pr.pwd_), now;
+                session_ << "SELECT id FROM creds WHERE login=(?) and pwd=(?)",
+                        into(cred_id), use(pr.login_), use(pr.pwd_), now;
+                session_ << "INSERT INTO profile (crid, fname, sname, age, gender, hob, city) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        use(cred_id), use(pr.fname_), use(pr.sname_), use(pr.age_), use(pr.gender_),
+                        use(pr.hobbies_), use(pr.city_),now;
 
-            signUp.store(false);
+                signUp.store(false);
+            }
+            auto& out = response.send();
+                    out << "<html>"
+                        << "<body>"
+                            << "<p><b>Profile:</b></p>"
+                            << "<p>First name: " << pr.fname_ <<"<Br>"
+                            << "Second name: " << pr.sname_ <<"<Br>"
+                            << "Gender: " << pr.gender_ <<"<Br>"
+                            << "Age: " << pr.age_ <<"<Br>"
+                            << "Hobbies: " << pr.hobbies_ <<"<Br>"
+                            << "City: " << pr.city_ <<"<Br>"
+                            << "Friends: " << "<Br></p>";
+            for(auto& mate: pr.friends_)
+                            out << mate.first << " " << mate.second << "<Br>";
+                        out << "<p>Search friends: " << "<Br>"
+                            << "<form action=\"http://" << address << ":" << port << "\" method=\"post\">"
+                                << "name "
+                                << "<input name=\"fname\" id=\"fname\">"
+                                << " surname "
+                                << "<input name=\"sname\" id=\"sname\">"
+                                << "<input type=\"hidden\" name=\"userId\" value=" << cred_id << ">"
+                                << "<input type=\"submit\" value=\"search\">"
+                            << "</form></p>"
+                        << "</body>"
+                    << "</html>";
+
+            profile.store(true);
+        }  catch (Poco::NotFoundException& e) {
+            std::cerr << e.what();
+        } catch (...) {
+            std::cerr << "Something wrong happened";
         }
-        auto& out = response.send();
-                out << "<html>"
-                    << "<body>"
-                        << "<p><b>Profile:</b></p>"
-                        << "<p>First name: " << pr.fname_ <<"<Br>"
-                        << "Second name: " << pr.sname_ <<"<Br>"
-                        << "Gender: " << pr.gender_ <<"<Br>"
-                        << "Age: " << pr.age_ <<"<Br>"
-                        << "Hobbies: " << pr.hobbies_ <<"<Br>"
-                        << "City: " << pr.city_ <<"<Br>"
-                        << "Friends: " << "<Br></p>";
-        for(auto& mate: pr.friends_)
-                        out << mate.first << " " << mate.second << "<Br>";
-                    out << "<p>Search friends: " << "<Br>"
-                        << "<form action=\"http://" << address << ":" << port << "\" method=\"post\">"
-                            << "name "
-                            << "<input name=\"fname\" id=\"fname\">"
-                            << " surname "
-                            << "<input name=\"sname\" id=\"sname\">"
-                            << "<input type=\"hidden\" name=\"userId\" value=" << cred_id << ">"
-                            << "<input type=\"submit\" value=\"search\">"
-                        << "</form></p>"
-                    << "</body>"
-                << "</html>";
-
-        profile.store(true);
+        std::cerr << "DisplayUserRequestHandler::handleRequest end";
     }
 };
 
