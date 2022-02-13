@@ -7,7 +7,7 @@ RUN apt-get install -y --no-install-recommends \
     build-essential \    
     libssl-dev \
     libiodbc2-dev \
-    mysql-server \
+    mysql-server-5.5 \
     libmysqlclient-dev \
     wget
 
@@ -48,16 +48,16 @@ ADD . /root/socialnetotus
 #     chown -R mysql:mysql /var/run/mysqld/mysqld.pid && \
 #     chmod -R 644 /var/run/mysqld/mysqld.sock && \
 #     chown -R mysql:mysql /var/lib/mysql /var/run/mysqld && \
-RUN mkfifo /var/run/mysqld/mysqld.sock && \
-    chown -R mysql /var/run/mysqld && \
-    service mysql restart && \
-    mysqladmin --user=root password "1" && \
+# RUN mkfifo /var/run/mysqld/mysqld.sock && \
+#     chown -R mysql /var/run/mysqld && \
+#     service mysql restart && \
+#     mysqladmin --user=root password "1" && \
 #     echo ${MYSQL_ROOT_PASSWORD} && \
     # mysqladmin -u root -h password '1' && \
 # RUN chown -R mysql:mysql /var/lib/mysql && \
 #     service mysql start && \
 #     mysqladmin --user=root password "1" && \
-    mysql -p1 < poco_server.sql
+    # mysql -p1 < poco_server.sql
     # mysqlcheck --check-upgrade --all-databases --auto-repair -u root --password=1 && \
     # mysql_upgrade --force -u root --password=1
 
@@ -71,4 +71,7 @@ RUN cmake .. && \
 # RUN apt-get update
 # WORKDIR /root
 # COPY --from=builder /root/socialnetotus/build-dir/socialnetotus /root/
+WORKDIR /root/socialnetotus
+RUN chmod +x start_server.sh
 CMD ./start_server.sh $PORT $ADDRESS
+

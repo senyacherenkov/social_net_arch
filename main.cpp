@@ -49,24 +49,25 @@ struct Profile {
     std::vector<std::pair<std::string, std::string>> friends_;
 };
 
-void ReadFile(const std::string & inPath, std::string & str)
+bool ReadFile(const std::string & inPath, std::string & str)
 {
     std::ifstream t(inPath.c_str());
 
     if(!t.is_open())
-        return;
+        return false;
     t.seekg(0, std::ios::end);
     str.reserve(t.tellg());
     t.seekg(0, std::ios::beg);
 
     str.assign((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+    return true;
 }
 
 class HelloRequestHandler: public HTTPRequestHandler
 {
     void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
     {
-        std::cerr << "HelloRequestHandler::handleRequest begin";
+        //std::cerr << "HelloRequestHandler::handleRequest begin\n";
 
         Application& app = Application::instance();
         app.logger().information("Request from %s", request.clientAddress().toString());
@@ -75,7 +76,9 @@ class HelloRequestHandler: public HTTPRequestHandler
         response.setContentType("text/html");
 
         std::string body;
-        ReadFile("../greeting.html", body);
+        if(!ReadFile("../greeting.html", body))
+            std::cerr << "Cannot open file greeting.html\n";
+
         body = std::regex_replace(body, std::regex("127.0.0.1"), address);
         body = std::regex_replace(body, std::regex("8080"), std::to_string(port));
         response.setContentLength(body.size());
@@ -83,7 +86,7 @@ class HelloRequestHandler: public HTTPRequestHandler
 
         startPage.store(true);
         signIn.store(true);
-        std::cerr << "HelloRequestHandler::handleRequest end";
+        //std::cerr << "HelloRequestHandler::handleRequest end\n";
 
     }
 };
@@ -92,7 +95,7 @@ class RegistrationRequestHandler: public HTTPRequestHandler
 {
     void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
     {
-        std::cerr << "RegistrationRequestHandler::handleRequest begin";
+        //std::cerr << "RegistrationRequestHandler::handleRequest begin";
 
         Application& app = Application::instance();
         app.logger().information("Request from %s", request.clientAddress().toString());
@@ -110,7 +113,7 @@ class RegistrationRequestHandler: public HTTPRequestHandler
         startPage.store(false);
         signIn.store(false);
         signUp.store(true);
-        std::cerr << "RegistrationRequestHandler::handleRequest end";
+        //std::cerr << "RegistrationRequestHandler::handleRequest end";
 
     }
 };
@@ -119,7 +122,7 @@ class DisplayFriendsRequestHandler: public HTTPRequestHandler
 {
     void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
     {
-        std::cerr << "DisplayFriendsRequestHandler::handleRequest begin";
+        //std::cerr << "DisplayFriendsRequestHandler::handleRequest begin";
 
         Application& app = Application::instance();
         app.logger().information("Request from %s", request.clientAddress().toString());
@@ -164,7 +167,7 @@ class DisplayFriendsRequestHandler: public HTTPRequestHandler
                     out << "</form>"
                     << "</p></body>"
                << "</html>";
-        std::cerr << "DisplayFriendsRequestHandler::handleRequest end";
+        //std::cerr << "DisplayFriendsRequestHandler::handleRequest end";
 
     }
 };
@@ -173,7 +176,7 @@ class DisplayUserRequestHandler: public HTTPRequestHandler
 {
     void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
     {
-        std::cerr << "DisplayUserRequestHandler::handleRequest begin";
+        //std::cerr << "DisplayUserRequestHandler::handleRequest begin";
         Application& app = Application::instance();
         app.logger().information("Request from %s", request.clientAddress().toString());
 
@@ -261,7 +264,7 @@ class DisplayUserRequestHandler: public HTTPRequestHandler
         } catch (...) {
             std::cerr << "Something wrong happened";
         }
-        std::cerr << "DisplayUserRequestHandler::handleRequest end";
+        //std::cerr << "DisplayUserRequestHandler::handleRequest end";
     }
 };
 
