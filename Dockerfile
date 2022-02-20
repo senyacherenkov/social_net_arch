@@ -39,39 +39,6 @@ RUN ldconfig
 WORKDIR /root/socialnetotus
 ADD . /root/socialnetotus
 
-# create db user and tables via mysql file
-#solution for Can't connect to local MySQL server through socket '/var/run/mysqld/mysqld.sock'
-# ENV MYSQL_ROOT_PASSWORD=1
-# RUN touch /var/run/mysqld/mysqld.sock && \
-#     touch /var/run/mysqld/mysqld.pid && \
-#     chown -R mysql:mysql /var/run/mysqld/mysqld.sock && \
-#     chown -R mysql:mysql /var/run/mysqld/mysqld.pid && \
-#     chmod -R 644 /var/run/mysqld/mysqld.sock && \
-#     chown -R mysql:mysql /var/lib/mysql /var/run/mysqld && \
-# RUN mkfifo /var/run/mysqld/mysqld.sock && \
-#     chown -R mysql /var/run/mysqld && \
-#     service mysql restart && \
-#     mysqladmin --user=root password "1" && \
-#     echo ${MYSQL_ROOT_PASSWORD} && \
-    # mysqladmin -u root -h password '1' && \
-# RUN chown -R mysql:mysql /var/lib/mysql && \
-#     service mysql start && \
-#     mysqladmin --user=root password "1" && \
-    # mysql -p1 < poco_server.sql
-    # mysqlcheck --check-upgrade --all-databases --auto-repair -u root --password=1 && \
-    # mysql_upgrade --force -u root --password=1
-
 WORKDIR /root/socialnetotus/build-dir
 RUN cmake .. && \
     cmake --build .
-# RUN ls -la
-
-# create the final image
-# FROM ubuntu:trusty
-# RUN apt-get update
-# WORKDIR /root
-# COPY --from=builder /root/socialnetotus/build-dir/socialnetotus /root/
-WORKDIR /root/socialnetotus
-RUN chmod +x start_server.sh
-CMD ./start_server.sh $PORT $ADDRESS
-
