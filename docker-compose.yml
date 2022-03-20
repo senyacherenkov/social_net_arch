@@ -1,19 +1,22 @@
 version: "3.9"
 services:
   web:
-    build: .
-    args:
-    - PORT=3000
-    - ADDRESS=127.0.0.1
-    depends_on:
-      - database
-    command: ./socialnetotus --port $PORT --address $ADDRESS
+   build: .
+   depends_on:
+     - database
+   command: ./socialnetotus --port 3000 --address 127.0.0.1 --dbip database
+   ports:
+     - 3000:3000
   database:
-    image: mysql:5.7
-    ports:
-        - "3306:3306"
-    command: --init-file poco_server.sql
+    image: mysql    
+    command: --default-authentication-plugin=mysql_native_password
     environment:
         MYSQL_ROOT_USER: root
         MYSQL_ROOT_PASSWORD: 1
-    
+        MYSQL_DATABASE: social_net
+        MYSQL_USER: poco_server
+        MYSQL_PASSWORD: otus
+        # MYSQL_TCP_PORT: 3307
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+    restart: always

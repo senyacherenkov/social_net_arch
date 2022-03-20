@@ -32,8 +32,9 @@ std::atomic<bool> profile{false};
 
 int port{0};
 std::string address;
+std::string dbip{"host="};
 
-constexpr const char* kDbCreds = "host=localhost;port=3306;db=social_net;user=poco_server;"
+constexpr const char* kDbCreds = ";port=3306;db=social_net;user=poco_server;"
                                  "password=otus;compress=true;auto-reconnect=true";
 constexpr const char* kSql = "MySQL";
 
@@ -131,7 +132,7 @@ class DisplayFriendsRequestHandler: public HTTPRequestHandler
         response.setContentType("text/html");
 
         Poco::Net::HTMLForm form(request, request.stream());
-        Session session_{kSql, kDbCreds};
+        Session session_{kSql, dbip};
         std::set<UInt16> profile_ids;
         std::set<UInt16> friend_ids;
         UInt64 user_id = std::stoi(form.get("userId"));
@@ -176,7 +177,7 @@ class DisplayUserRequestHandler: public HTTPRequestHandler
 {
     void handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
     {
-        //std::cerr << "DisplayUserRequestHandler::handleRequest begin";
+        std::cerr << "DisplayUserRequestHandler::handleRequest begin";
         Application& app = Application::instance();
         app.logger().information("Request from %s", request.clientAddress().toString());
 
@@ -190,7 +191,9 @@ class DisplayUserRequestHandler: public HTTPRequestHandler
         pr.login_ = form.get("login");
         pr.pwd_ = form.get("pwd");
         try {
-            Session session_{kSql, kDbCreds};
+            std::cerr << "start db session";
+            Session session_{kSql, dbip};
+            std::cerr << "session started";
 
             if (signIn.load()) {
                 session_ << "SELECT id FROM creds WHERE login=(?) and pwd=(?)",
@@ -296,6 +299,7 @@ class WebServerApp: public ServerApplication
 
     void handlePort(const std::string& name, const std::string& value){ port = std::stoi(value); }
     void handleAddress(const std::string& name, const std::string& value){ address = value; }
+    void handleDbIp(const std::string& name, const std::string& value){ dbip += value; }
 
     void defineOptions(OptionSet& options)
     {
@@ -309,16 +313,26 @@ class WebServerApp: public ServerApplication
          .callback(OptionCallback<WebServerApp>(this, &WebServerApp::handlePort)));
 
          options.addOption(
-         Option("address", "p", "address of app")
+         Option("address", "a", "address of app")
          .required(true)
          .repeatable(true)
          .argument("address")
          .callback(OptionCallback<WebServerApp>(this, &WebServerApp::handleAddress)));
+
+         options.addOption(
+         Option("dbip", "d", "address of database")
+         .required(true)
+         .repeatable(true)
+         .argument("dbip")
+         .callback(OptionCallback<WebServerApp>(this, &WebServerApp::handleDbIp)));
     }
 
     int main(const std::vector<std::string>& args)
     {
         UInt16 port_ = static_cast<UInt16>(config().getUInt("port", port));
+
+        dbip += kDbCreds;
+        std::cerr << dbip << std::endl;
 
         Poco::Data::MySQL::Connector::registerConnector();
         HTTPServer srv(new HelloRequestHandlerFactory, port_);

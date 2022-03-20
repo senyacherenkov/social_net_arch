@@ -1,14 +1,14 @@
-DROP DATABASE IF EXISTS social_net;
-CREATE DATABASE social_net;
-USE social_net;
+-- DROP DATABASE IF EXISTS social_net;
+-- CREATE DATABASE social_net;
+-- USE social_net;
 
 -- GRANT USAGE ON *.* TO 'poco_server'@'localhost';
 -- DROP USER 'poco_server'@'localhost';
 -- FLUSH PRIVILEGES;
 
-CREATE USER 'poco_server'@'localhost' IDENTIFIED BY 'otus';
-GRANT ALL PRIVILEGES ON * . * TO 'poco_server'@'localhost';
-FLUSH PRIVILEGES;
+-- CREATE USER 'poco_server'@'localhost' IDENTIFIED BY 'otus';
+-- GRANT ALL PRIVILEGES ON * . * TO 'poco_server'@'localhost';
+-- FLUSH PRIVILEGES;
 
 DROP TABLE IF EXISTS creds;
 DROP TABLE IF EXISTS profile;
